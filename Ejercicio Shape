@@ -2,61 +2,6 @@
 Create a superclass called Shape(), which is the base of the classes Reactangle() and Square(), define the methods compute_area and compute_perimeter in Shape() and then using polymorphism redefine the methods properly in Rectangle and in Square.
 
 Using the classes Point() and Line() define a new super-class Shape() with the following structure:
-```mermaid
-classDiagram
-    class Shape {
-        + vertices: list(Point)
-        + edges: list(Line)
-        + inner_angles: list(float)
-        + is_regular: bool
-        + compute_area(self)
-        + compute_perimeter(self)
-        + compute_inner_angles(self)
-    }
-
-    class Point {
-        + x: int
-        + y: int
-        + compute_distance(self, Point)
-    }
-
-    class Line {
-        + start_point: Point
-        + end_point: Point
-        + length: float
-    }
-
-    class Triangle {
-    }
-
-    class Isosceles{
-    }
-
-    class Equilateral{
-    }
-
-    class Scalene{
-    }
-
-    class TriRectangle{
-    }
-
-    class Rectangle{
-    }
-
-    class Square{
-    }
-
-    Shape *-- Line 
-    Shape *-- Point
-    Triangle --|> Shape
-    Isosceles --|> Triangle
-    Equilateral --|> Triangle
-    Scalene --|> Triangle
-    TriRectangle --|> Triangle
-    Rectangle --|> Shape
-    Square --|> Rectangle
-```
 
 **Descripción del ejercicio:**
 En este código se implementa herencia y polimorfismo. Primero, se definen las clases Point y Line, que modelan puntos y líneas en el plano, sirviendo como base geométrica. Luego, se crea la clase Shape, una superclase abstracta que define la estructura y los métodos comunes (como calcular área y perímetro) que deben ser implementados por las subclases. A partir de esta, se heredan Rectangle y Square: el Rectangle construye su geometría a partir de un vértice superior izquierdo, un ancho y una altura, calculando sus vértices, aristas y ángulos internos; mientras que Square hereda del rectángulo y asegura que todos los lados sean iguales. Finalmente, en la sección if __name__ == "__main__", se crean instancias de estas figuras, se muestran sus propiedades (área, perímetro y vértices) y se demuestra el polimorfismo, recorriendo una lista de figuras distintas pero tratadas de forma uniforme mediante sus métodos comunes.
