@@ -1,0 +1,285 @@
+**EJERCICIO**
+Create a superclass called Shape(), which is the base of the classes Reactangle() and Square(), define the methods compute_area and compute_perimeter in Shape() and then using polymorphism redefine the methods properly in Rectangle and in Square.
+
+Using the classes Point() and Line() define a new super-class Shape() with the following structure:
+```mermaid
+classDiagram
+    class Shape {
+        + vertices: list(Point)
+        + edges: list(Line)
+        + inner_angles: list(float)
+        + is_regular: bool
+        + compute_area(self)
+        + compute_perimeter(self)
+        + compute_inner_angles(self)
+    }
+
+    class Point {
+        + x: int
+        + y: int
+        + compute_distance(self, Point)
+    }
+
+    class Line {
+        + start_point: Point
+        + end_point: Point
+        + length: float
+    }
+
+    class Triangle {
+    }
+
+    class Isosceles{
+    }
+
+    class Equilateral{
+    }
+
+    class Scalene{
+    }
+
+    class TriRectangle{
+    }
+
+    class Rectangle{
+    }
+
+    class Square{
+    }
+
+    Shape *-- Line 
+    Shape *-- Point
+    Triangle --|> Shape
+    Isosceles --|> Triangle
+    Equilateral --|> Triangle
+    Scalene --|> Triangle
+    TriRectangle --|> Triangle
+    Rectangle --|> Shape
+    Square --|> Rectangle
+```
+
+**Descripción del ejercicio:**
+En este código se implementa herencia y polimorfismo. Primero, se definen las clases Point y Line, que modelan puntos y líneas en el plano, sirviendo como base geométrica. Luego, se crea la clase Shape, una superclase abstracta que define la estructura y los métodos comunes (como calcular área y perímetro) que deben ser implementados por las subclases. A partir de esta, se heredan Rectangle y Square: el Rectangle construye su geometría a partir de un vértice superior izquierdo, un ancho y una altura, calculando sus vértices, aristas y ángulos internos; mientras que Square hereda del rectángulo y asegura que todos los lados sean iguales. Finalmente, en la sección if __name__ == "__main__", se crean instancias de estas figuras, se muestran sus propiedades (área, perímetro y vértices) y se demuestra el polimorfismo, recorriendo una lista de figuras distintas pero tratadas de forma uniforme mediante sus métodos comunes.
+```
+rom math import sqrt, isclose
+
+class Point:
+    def __init__(self, x: float = 0.0, y: float = 0.0):
+        self.__x = float(x)
+        self.__y = float(y)
+
+    # Getters / Setters
+    def get_x(self) -> float:
+        return self.__x
+
+    def set_x(self, x: float) -> None:
+        self.__x = float(x)
+
+    def get_y(self) -> float:
+        return self.__y
+
+    def set_y(self, y: float) -> None:
+        self.__y = float(y)
+
+    def compute_distance(self, other: "Point") -> float:
+        if not isinstance(other, Point):
+            raise TypeError("other must be a Point")
+        dx = self.__x - other.get_x()
+        dy = self.__y - other.get_y()
+        return sqrt(dx * dx + dy * dy)
+
+    def __repr__(self):
+        return f"Point({self.__x}, {self.__y})"
+
+
+class Line:
+    def __init__(self, start_point: Point, end_point: Point):
+        if not isinstance(start_point, Point) or not isinstance(end_point, Point):
+            raise TypeError("start_point and end_point must be Point instances")
+        self.__start_point = start_point
+        self.__end_point = end_point
+
+    # Getters / Setters
+    def get_start_point(self) -> Point:
+        return self.__start_point
+
+    def set_start_point(self, p: Point) -> None:
+        if not isinstance(p, Point):
+            raise TypeError("p must be a Point")
+        self.__start_point = p
+
+    def get_end_point(self) -> Point:
+        return self.__end_point
+
+    def set_end_point(self, p: Point) -> None:
+        if not isinstance(p, Point):
+            raise TypeError("p must be a Point")
+        self.__end_point = p
+
+    def length(self) -> float:
+        return self.__start_point.compute_distance(self.__end_point)
+
+    def __repr__(self):
+        return f"Line({self.__start_point}, {self.__end_point})"
+
+
+class Shape:
+    """Superclase para todas las figuras geométricas"""
+
+    def __init__(self):
+        self.__is_regular = False
+        self.__vertices = []
+        self.__edges = []
+        self.__inner_angles = []
+
+    # Getters / Setters
+    def get_is_regular(self) -> bool:
+        return self.__is_regular
+
+    def set_is_regular(self, value: bool) -> None:
+        self.__is_regular = bool(value)
+
+    def get_vertices(self) -> list:
+        return list(self.__vertices)
+
+    def set_vertices(self, vertices: list) -> None:
+        if not all(isinstance(v, Point) for v in vertices):
+            raise TypeError("vertices must be list of Point")
+        self.__vertices = list(vertices)
+
+    def get_edges(self) -> list:
+        return list(self.__edges)
+
+    def set_edges(self, edges: list) -> None:
+        if not all(isinstance(e, Line) for e in edges):
+            raise TypeError("edges must be list of Line")
+        self.__edges = list(edges)
+
+    def get_inner_angles(self) -> list:
+        return list(self.__inner_angles)
+
+    def set_inner_angles(self, angles: list) -> None:
+        self.__inner_angles = [float(a) for a in angles]
+
+    # Métodos polimórficos
+    def compute_area(self) -> float:
+        raise NotImplementedError("Este método debe ser redefinido en la subclase")
+
+    def compute_perimeter(self) -> float:
+        raise NotImplementedError("Este método debe ser redefinido en la subclase")
+
+    def compute_inner_angles(self) -> list:
+        raise NotImplementedError("Este método debe ser redefinido en la subclase")
+
+
+class Rectangle(Shape):
+    def __init__(self, top_left: Point, width: float, height: float):
+        super().__init__()
+        if not isinstance(top_left, Point):
+            raise TypeError("top_left debe ser un Point")
+
+        self.__top_left = top_left
+        self.__width = float(width)
+        self.__height = float(height)
+
+        self.__build_geometry()
+        self.set_is_regular(isclose(self.__width, self.__height))
+
+    def __build_geometry(self):
+        x = self.__top_left.get_x()
+        y = self.__top_left.get_y()
+
+        v0 = Point(x, y)
+        v1 = Point(x + self.__width, y)
+        v2 = Point(x + self.__width, y - self.__height)
+        v3 = Point(x, y - self.__height)
+
+        vertices = [v0, v1, v2, v3]
+        self.set_vertices(vertices)
+
+        edges = [Line(v0, v1), Line(v1, v2), Line(v2, v3), Line(v3, v0)]
+        self.set_edges(edges)
+
+        self.set_inner_angles([90.0, 90.0, 90.0, 90.0])
+
+    # Getters / Setters específicos
+    def get_top_left(self) -> Point:
+        return self.__top_left
+
+    def set_top_left(self, p: Point) -> None:
+        self.__top_left = p
+        self.__build_geometry()
+
+    def get_width(self) -> float:
+        return self.__width
+
+    def set_width(self, w: float) -> None:
+        self.__width = float(w)
+        self.__build_geometry()
+
+    def get_height(self) -> float:
+        return self.__height
+
+    def set_height(self, h: float) -> None:
+        self.__height = float(h)
+        self.__build_geometry()
+
+    # Métodos polimórficos
+    def compute_area(self) -> float:
+        return self.__width * self.__height
+
+    def compute_perimeter(self) -> float:
+        return 2 * (self.__width + self.__height)
+
+    def compute_inner_angles(self) -> list:
+        return self.get_inner_angles()
+
+    def __repr__(self):
+        return f"Rectangle(top_left={self.__top_left}, width={self.__width}, height={self.__height})"
+
+
+class Square(Rectangle):
+    def __init__(self, top_left: Point, side: float):
+        super().__init__(top_left, side, side)
+        self.set_is_regular(True)
+
+    def set_side(self, s: float) -> None:
+        self.set_width(s)
+        self.set_height(s)
+        self.set_is_regular(True)
+
+    def get_side(self) -> float:
+        return self.get_width()
+
+    def compute_area(self) -> float:
+        return super().compute_area()
+
+    def compute_perimeter(self) -> float:
+        return super().compute_perimeter()
+
+    def __repr__(self):
+        return f"Square(top_left={self.get_top_left()}, side={self.get_side()})"
+
+
+if __name__ == "__main__":
+    p1 = Point(0, 0)
+    rect = Rectangle(p1, 4, 3)
+    square = Square(Point(1, 1), 5)
+
+    print("=== RECTÁNGULO ===")
+    print(rect)
+    print("Área:", rect.compute_area())
+    print("Perímetro:", rect.compute_perimeter())
+    print("Vértices:", rect.get_vertices())
+
+    print("\n=== CUADRADO ===")
+    print(square)
+    print("Área:", square.compute_area())
+    print("Perímetro:", square.compute_perimeter())
+    print("Vértices:", square.get_vertices())
+
+    print("\n=== POLIMORFISMO ===")
+    figuras = [rect, square]
+    for fig in figuras:
+        print(f"{fig.__class__.__name__} -> área: {fig.compute_area()} | perímetro: {fig.compute_perimeter()}")
+```
