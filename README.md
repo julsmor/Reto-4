@@ -9,7 +9,7 @@ Add the class Payment() following the class example.
 
 Se crearon varias clases como `MenuItem`, `Beverage`, `Appetizer`, `MainCourse`, `Order` y `Payment`, implementando **encapsulamiento** mediante atributos privados y métodos *getters* y *setters* para acceder y modificar los datos de manera controlada. Además, se **sobrescribió el método `get_total_price()`** en las subclases para ajustar los precios según el tipo de producto y las condiciones de la orden (por ejemplo, aplicar un **descuento del 20% en bebidas** cuando el pedido incluye un plato principal). También se añadió la clase `Payment`, que simula el proceso de pago tanto con **tarjeta** como en **efectivo**, calculando el cambio o validando el monto entregado. Finalmente, se probó el sistema creando un menú, una orden con varios productos y mostrando cómo se calculan los totales con y sin descuentos, demostrando una aplicación completa de herencia, encapsulamiento y polimorfismo en un contexto práctico.
 
-```
+```python
 from typing import List, Optional
 
 
