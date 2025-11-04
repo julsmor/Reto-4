@@ -1,1 +1,324 @@
 **Segundo punto**
+**Descripción del ejercicio**
+Se desarrolló una jerarquía de clases en Python que representa figuras geométricas, aplicando los principios fundamentales de la Programación Orientada a Objetos. 
+Se creó una superclase abstracta llamada Shape, encargada de definir la estructura y comportamiento general de las figuras, con atributos como vértices, lados y métodos para calcular área y perímetro. 
+A partir de esta clase se implementaron las subclases Rectangle y Square, que heredan y redefinen dichos métodos utilizando polimorfismo para adaptarlos a sus características específicas.
+Además, se implementaron las clases auxiliares Point y Line, que representan los elementos básicos de una figura mediante composición. 
+En conjunto, el código demuestra cómo combinar herencia, encapsulamiento, composición y polimorfismo para modelar de manera ordenada y flexible las relaciones entre diferentes tipos de figuras geométricas.
+```python 
+import math
+from typing import List
+
+class Point:
+    def __init__(self, x: float = 0.0, y: float = 0.0):
+        self.__x = float(x)
+        self.__y = float(y)
+
+    def get_x(self) -> float:
+        return self.__x
+
+    def set_x(self, x: float):
+        self.__x = float(x)
+
+    def get_y(self) -> float:
+        return self.__y
+
+    def set_y(self, y: float):
+        self.__y = float(y)
+
+    def compute_distance(self, other: "Point") -> float:
+        dx = self.__x - other.get_x()
+        dy = self.__y - other.get_y()
+        return math.hypot(dx, dy)
+
+    def __repr__(self):
+        return f"Point({self.__x}, {self.__y})"
+
+class Line:
+    def __init__(self, start_point: Point, end_point: Point):
+        self.__start_point = start_point
+        self.__end_point = end_point
+        self.__length = self.compute_length()
+
+    def get_start_point(self) -> Point:
+        return self.__start_point
+
+    def set_start_point(self, p: Point):
+        self.__start_point = p
+        self.__length = self.compute_length()
+
+    def get_end_point(self) -> Point:
+        return self.__end_point
+
+    def set_end_point(self, p: Point):
+        self.__end_point = p
+        self.__length = self.compute_length()
+
+    def get_length(self) -> float:
+        return self.__length
+
+    def compute_length(self) -> float:
+        return self.__start_point.compute_distance(self.__end_point)
+
+    def __repr__(self):
+        return f"Line({self.__start_point}, {self.__end_point}) len={self.__length:.3f}"
+
+class Shape:
+    def __init__(self, vertices: List[Point]):
+        self._vertices = vertices[:] 
+        self._edges = self._create_edges()
+
+    def _create_edges(self) -> List[Line]:
+        edges: List[Line] = []
+        n = len(self._vertices)
+        for i in range(n):
+            edges.append(Line(self._vertices[i], self._vertices[(i+1) % n]))
+        return edges
+
+    # Getters / Setters
+    def get_vertices(self) -> List[Point]:
+        return self._vertices
+
+    def set_vertices(self, vertices: List[Point]):
+        self._vertices = vertices[:]
+        self._edges = self._create_edges()
+
+    def get_edges(self) -> List[Line]:
+        return self._edges
+
+    # Métodos a redefinir
+    def compute_area(self) -> float:
+        raise NotImplementedError("Redefinir en subclase")
+
+    def compute_perimeter(self) -> float:
+        raise NotImplementedError("Redefinir en subclase")
+
+# --- Triangle (clase base para triángulos) ---
+class Triangle(Shape):
+    def __init__(self, v1: Point, v2: Point, v3: Point):
+        super().__init__([v1, v2, v3])
+        # atributos "privados"
+        self.__v1 = v1
+        self.__v2 = v2
+        self.__v3 = v3
+        # recalculando longitudes
+        self.__a = self.__v2.compute_distance(self.__v3)  # lado opuesto a v1
+        self.__b = self.__v1.compute_distance(self.__v3)  # lado opuesto a v2
+        self.__c = self.__v1.compute_distance(self.__v2)  # lado opuesto a v3
+        # validación: no colineal
+        if self._are_colinear():
+            raise ValueError("Los tres vértices no pueden ser colineales (no forman un triángulo).")
+
+    # --- Getters y Setters para vértices ---
+    def get_v1(self) -> Point:
+        return self.__v1
+
+    def set_v1(self, p: Point):
+        self.__v1 = p
+        self.set_vertices([self.__v1, self.__v2, self.__v3])
+        self._recompute_sides()
+
+    def get_v2(self) -> Point:
+        return self.__v2
+
+    def set_v2(self, p: Point):
+        self.__v2 = p
+        self.set_vertices([self.__v1, self.__v2, self.__v3])
+        self._recompute_sides()
+
+    def get_v3(self) -> Point:
+        return self.__v3
+
+    def set_v3(self, p: Point):
+        self.__v3 = p
+        self.set_vertices([self.__v1, self.__v2, self.__v3])
+        self._recompute_sides()
+
+    # --- Getters para lados (longitudes) ---
+    def get_sides(self):
+        return (self.__a, self.__b, self.__c)
+
+    def _recompute_sides(self):
+        self.__a = self.__v2.compute_distance(self.__v3)
+        self.__b = self.__v1.compute_distance(self.__v3)
+        self.__c = self.__v1.compute_distance(self.__v2)
+        if self._are_colinear():
+            raise ValueError("Los tres vértices no pueden ser colineales (no forman un triángulo).")
+        # actualizar edges en Shape
+        self._edges = self._create_edges()
+
+    def _are_colinear(self) -> bool:
+        # determinante / área doble (si = 0 => colineales)
+        x1, y1 = self.__v1.get_x(), self.__v1.get_y()
+        x2, y2 = self.__v2.get_x(), self.__v2.get_y()
+        x3, y3 = self.__v3.get_x(), self.__v3.get_y()
+        area2 = x1*(y2-y3) + x2*(y3-y1) + x3*(y1-y2)
+        return math.isclose(area2, 0.0, rel_tol=1e-9, abs_tol=1e-12)
+
+    # --- Perímetro: suma de lados ---
+    def compute_perimeter(self) -> float:
+        return self.__a + self.__b + self.__c
+
+    # --- Área: fórmula del polígono (shoelace) o Heron; uso shoelace robusto ---
+    def compute_area(self) -> float:
+        x1, y1 = self.__v1.get_x(), self.__v1.get_y()
+        x2, y2 = self.__v2.get_x(), self.__v2.get_y()
+        x3, y3 = self.__v3.get_x(), self.__v3.get_y()
+        area = abs((x1*(y2-y3) + x2*(y3-y1) + x3*(y1-y2)) / 2.0)
+        return area
+
+    # --- Ángulos internos usando ley del coseno ---
+    def compute_inner_angles(self) -> List[float]:
+        a, b, c = self.__a, self.__b, self.__c
+        # ángulo en v1 asociado al lado a opuesto: cos(alpha) = (b^2 + c^2 - a^2) / (2bc)
+        def angle_from_sides(opposite, side1, side2):
+            # protección numérica
+            denom = 2 * side1 * side2
+            if math.isclose(denom, 0.0):
+                return 0.0
+            val = (side1**2 + side2**2 - opposite**2) / denom
+            # recortar a [-1, 1] por errores numéricos
+            val = max(-1.0, min(1.0, val))
+            return math.degrees(math.acos(val))
+
+        alpha = angle_from_sides(a, b, c)
+        beta  = angle_from_sides(b, a, c)
+        gamma = angle_from_sides(c, a, b)
+        return [alpha, beta, gamma]
+
+    def __repr__(self):
+        a, b, c = self.get_sides()
+        return f"{self.__class__.__name__}(sides={a:.3f}, {b:.3f}, {c:.3f})"
+
+# --- Subclases específicas ---
+
+class Equilateral(Triangle):
+    def __init__(self, v1: Point, side: float, orientation: float = 0.0):
+     
+        x1, y1 = v1.get_x(), v1.get_y()
+        v2 = Point(x1 + side, y1)
+        # tercer vértice usando la altura del equilátero: h = side*sqrt(3)/2
+        h = side * math.sqrt(3) / 2
+        v3 = Point(x1 + side/2, y1 + h)
+        super().__init__(v1, v2, v3)
+        # validación simple
+        a, b, c = self.get_sides()
+        if not (math.isclose(a, b, rel_tol=1e-9) and math.isclose(b, c, rel_tol=1e-9)):
+            raise ValueError("Error al construir Equilateral: lados no iguales.")
+
+    # Polimorfismo: área/perímetro más directos
+    def compute_area(self) -> float:
+        a, _, _ = self.get_sides()
+        return (math.sqrt(3) / 4) * (a ** 2)
+
+    def compute_perimeter(self) -> float:
+        a, _, _ = self.get_sides()
+        return 3 * a
+
+class Isosceles(Triangle):
+    def __init__(self, v1: Point, v2: Point, v3: Point):
+        super().__init__(v1, v2, v3)
+        a, b, c = self.get_sides()
+        # comprobar al menos dos iguales (con tolerancia)
+        if (math.isclose(a, b, rel_tol=1e-9) or
+            math.isclose(b, c, rel_tol=1e-9) or
+            math.isclose(a, c, rel_tol=1e-9)):
+            pass
+        else:
+            raise ValueError("No es isósceles: al menos dos lados deben ser iguales.")
+
+class Scalene(Triangle):
+    def __init__(self, v1: Point, v2: Point, v3: Point):
+        super().__init__(v1, v2, v3)
+        a, b, c = self.get_sides()
+        # comprobar todos distintos
+        if (math.isclose(a, b, rel_tol=1e-9) or
+            math.isclose(b, c, rel_tol=1e-9) or
+            math.isclose(a, c, rel_tol=1e-9)):
+            raise ValueError("No es escaleno: algún par de lados es igual.")
+        # si pasa, es escaleno
+
+class TriRectangle(Triangle):
+    def __init__(self, v1: Point, v2: Point, v3: Point):
+        super().__init__(v1, v2, v3)
+        a, b, c = self.get_sides()
+        # verificar si cumple Pitágoras para algún permutación (con tolerancia)
+        def is_pythag(a_, b_, c_):
+            return math.isclose(a_**2 + b_**2, c_**2, rel_tol=1e-9, abs_tol=1e-9)
+
+        if not (is_pythag(a, b, c) or is_pythag(a, c, b) or is_pythag(b, c, a)):
+            raise ValueError("No es triángulo rectángulo: no cumple Pitágoras.")
+        # si es rectángulo, podemos identificar catetos y hipotenusa si necesitamos
+
+    # redefinimos área para eficiencia: base*altura/2 (encontramos catetos)
+    def compute_area(self) -> float:
+        a, b, c = self.get_sides()
+        # identificar hipotenusa = mayor lado
+        sides = sorted([a, b, c])
+        cat1, cat2, hyp = sides[0], sides[1], sides[2]
+        return 0.5 * cat1 * cat2
+
+    # perímetro puede usar el método base
+    # compute_perimeter heredado de Triangle funciona bien
+
+# --- Ejemplos y pruebas simples ---
+if __name__ == "__main__":
+    # Triángulo general
+    A = Point(0, 0)
+    B = Point(4, 0)
+    C = Point(1, 3)
+    tri = Triangle(A, B, C)
+    print("Triangle:", tri)
+    print("Lados:", tri.get_sides())
+    print("Perímetro:", tri.compute_perimeter())
+    print("Área:", tri.compute_area())
+    print("Ángulos (grados):", tri.compute_inner_angles())
+
+    # Equilátero (lado 2)
+    E = Point(0, 0)
+    eq = Equilateral(E, side=2.0)
+    print("\nEquilateral:", eq)
+    print("Lados:", eq.get_sides())
+    print("Perímetro (equil):", eq.compute_perimeter())
+    print("Área (equil):", eq.compute_area())
+    print("Ángulos (equil):", eq.compute_inner_angles())
+
+    # Isósceles (construido a partir de vértices)
+    I1 = Point(0, 0)
+    I2 = Point(2, 0)
+    I3 = Point(1, 2)
+    iso = Isosceles(I1, I2, I3)
+    print("\nIsosceles:", iso)
+    print("Lados:", iso.get_sides())
+    print("Área (isosceles):", iso.compute_area())
+    print("Ángulos (isosceles):", iso.compute_inner_angles())
+
+    # Triángulo Rectángulo (3-4-5)
+    R1 = Point(0, 0)
+    R2 = Point(3, 0)
+    R3 = Point(0, 4)
+    rt = TriRectangle(R1, R2, R3)
+    print("\nTriRectangle:", rt)
+    print("Lados:", rt.get_sides())
+    print("Área (rect):", rt.compute_area())
+    print("Perímetro (rect):", rt.compute_perimeter())
+    print("Ángulos (rect):", rt.compute_inner_angles())
+
+    # Escaleno (todos distintos)
+    S1 = Point(0, 0)
+    S2 = Point(5, 0)
+    S3 = Point(1, 2)
+    sc = Scalene(S1, S2, S3)
+    print("\nScalene:", sc)
+    print("Lados:", sc.get_sides())
+    print("Área (scalene):", sc.compute_area())
+    print("Ángulos (scalene):", sc.compute_inner_angles())
+
+    # Pruebas rápidas con assert
+    # Triángulo rectángulo 3-4-5: área debe ser 6
+    assert math.isclose(rt.compute_area(), 0.5 * 3 * 4, rel_tol=1e-9)
+    # Equilátero lado 2: área = sqrt(3)/4 * 4 = sqrt(3)
+    assert math.isclose(eq.compute_area(), math.sqrt(3), rel_tol=1e-9)
+
+    print("\nTodas las pruebas rápidas pasaron.")
+```
